@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchWeather, clearWeather } from './redux/weatherSlice';
-import { RootState, AppDispatch } from './redux/store';
 import { db } from './firebase';
 import { collection, addDoc, query, orderBy, limit, onSnapshot } from 'firebase/firestore';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -9,10 +8,10 @@ import './App.css';
 
 function App() {
   const [city, setCity] = useState('');
-  const [recentSearches, setRecentSearches] = useState<string[]>([]);
+  const [recentSearches, setRecentSearches] = useState([]);
   
-  const dispatch = useDispatch<AppDispatch>(); 
-  const { data, loading, error } = useSelector((state: RootState) => state.weather);
+  const dispatch = useDispatch(); 
+  const { data, loading, error } = useSelector((state) => state.weather);
 
   useEffect(() => {
     const q = query(collection(db, "history"), orderBy("timestamp", "desc"), limit(4));
@@ -22,7 +21,7 @@ function App() {
     return () => unsubscribe();
   }, []);
 
-  const handleSearch = async (e: React.FormEvent) => {
+  const handleSearch = async (e) => {
     e.preventDefault();
     if (city.trim()) {
       const result = await dispatch(fetchWeather(city));
@@ -44,7 +43,7 @@ function App() {
   };
 
   // Dynamic Background Logic
-  const getWeatherBackground = (condition: string | undefined) => {
+  const getWeatherBackground = (condition) => {
     if (!condition) return "bg-gradient-to-br from-slate-900 to-slate-800";
     switch (condition.toLowerCase()) {
       case 'clear': return "bg-gradient-to-br from-sky-400 to-blue-600";
@@ -198,7 +197,7 @@ function App() {
 }
 
 // Simple internal component for details
-const DetailBox = ({ label, value }: { label: string, value: string }) => (
+const DetailBox = ({ label, value }) => (
   <div className="bg-white/5 p-4 rounded-2xl border border-white/5 backdrop-blur-sm hover:bg-white/10 transition-colors">
     <p className="text-xs text-white/50 uppercase tracking-widest mb-1">{label}</p>
     <p className="text-xl font-medium">{value}</p>

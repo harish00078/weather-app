@@ -1,21 +1,41 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchWeather, fetchForecast, clearWeather } from './redux/weatherSlice';
 import { db } from './firebase';
 import { collection, addDoc, query, orderBy, limit, onSnapshot } from 'firebase/firestore';
-import { motion, AnimatePresence } from 'framer-motion';
 import { Canvas } from '@react-three/fiber';
-import './App.css';
 
-// Component Imports
+// Import 3D Scene
+import WeatherScene from './components/WeatherScene';
+
+// Import Modular UI Components
 import Header from './components/Header';
 import SearchBar from './components/SearchBar';
-import RecentSearches from './components/RecentSearches';
 import CurrentWeather from './components/CurrentWeather';
 import Forecast from './components/Forecast';
+import RecentSearches from './components/RecentSearches';
 import ErrorMessage from './components/ErrorMessage';
 import LoadingSpinner from './components/LoadingSpinner';
-import WeatherScene from './components/WeatherScene';
+
+// Theme Toggle Component
+const ThemeToggle = () => {
+  const [isDark, setIsDark] = useState(false);
+  useEffect(() => {
+    if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      setIsDark(true);
+      document.documentElement.classList.add('dark');
+    }
+  }, []);
+  const toggle = () => {
+    setIsDark(!isDark);
+    document.documentElement.classList.toggle('dark');
+  };
+  return (
+    <button onClick={toggle} className="fixed top-4 right-4 p-2 rounded-full bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm shadow-md text-gray-600 dark:text-yellow-400 z-50 hover:bg-white dark:hover:bg-gray-700 transition-colors">
+      {isDark ? '☀️' : '🌙'}
+    </button>
+  );
+};
 
 function App() {
   const [city, setCity] = useState('');
@@ -24,23 +44,24 @@ function App() {
   const dispatch = useDispatch(); 
   const { data, forecast, loading, error } = useSelector((state) => state.weather);
 
+  // Firestore Real-time Listener
   useEffect(() => {
-    const q = query(collection(db, "history"), orderBy("timestamp", "desc"), limit(4));
+    const q = query(collection(db, "history"), orderBy("timestamp", "desc"), limit(5));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       setRecentSearches(snapshot.docs.map(doc => doc.data().city));
     });
     return () => unsubscribe();
   }, []);
 
-  const handleSearch = async (e) => {
-    e.preventDefault();
-    if (city.trim()) {
-      const result = await dispatch(fetchWeather(city));
-      if (fetchWeather.fulfilled.match(result)) {
-        dispatch(fetchForecast(city));
+  const performSearch = async (cityName) => {
+    if (cityName.trim()) {
+      const weatherResult = await dispatch(fetchWeather(cityName));
+      dispatch(fetchForecast(cityName));
+
+      if (fetchWeather.fulfilled.match(weatherResult)) {
         try {
-          await addDoc(collection(db, "history"), {
-            city: city,
+           await addDoc(collection(db, "history"), {
+            city: cityName,
             timestamp: new Date()
           });
         } catch(err) { console.error("DB Error", err); }
@@ -49,9 +70,9 @@ function App() {
     }
   };
 
-  const handleRecentSearch = (searchCity) => {
-    dispatch(fetchWeather(searchCity));
-    dispatch(fetchForecast(searchCity));
+  const handleSearch = (e) => {
+    e.preventDefault();
+    performSearch(city);
   };
 
   const handleClear = () => {
@@ -59,87 +80,62 @@ function App() {
     setCity('');
   };
 
-  // Dynamic Background Logic
-  const getWeatherBackground = (condition) => {
-    if (!condition) return "bg-gradient-to-br from-slate-900 to-slate-800";
-    switch (condition.toLowerCase()) {
-      case 'clear': return "bg-gradient-to-br from-sky-400 to-blue-600";
-      case 'clouds': return "bg-gradient-to-br from-slate-400 to-slate-600";
-      case 'rain': 
-      case 'drizzle': return "bg-gradient-to-br from-slate-700 to-slate-900";
-      case 'thunderstorm': return "bg-gradient-to-br from-indigo-900 to-slate-900";
-      case 'snow': return "bg-gradient-to-br from-blue-100 to-blue-300";
-      case 'mist':
-      case 'fog': return "bg-gradient-to-br from-gray-300 to-gray-500";
-      default: return "bg-gradient-to-br from-blue-500 to-blue-700";
-    }
-  };
-
   return (
-    <div className={`relative min-h-screen text-white transition-colors duration-1000 ease-in-out flex flex-col items-center justify-center p-6 font-sans ${getWeatherBackground(data?.weather[0]?.main)}`}>
+    <div className="relative min-h-screen w-full font-sans overflow-hidden text-slate-900 dark:text-white transition-colors duration-300">
       
-      {/* 3D Weather Background */}
-      <div className="absolute inset-0 z-0 pointer-events-none">
-        <Canvas camera={{ position: [0, 0, 5], fov: 75 }}>
-          <WeatherScene weatherCondition={data?.weather[0]?.main} />
+      {/* 3D Background Layer */}
+      {/* FIX: Added explicit h-screen, w-full, and fixed positioning to ensure it covers the background */}
+      <div className="fixed inset-0 z-0 bg-gradient-to-b from-slate-100 to-slate-200 dark:from-slate-900 dark:to-slate-800 h-screen w-screen">
+        <Canvas 
+          camera={{ position: [0, 0, 5], fov: 60 }}
+          style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
+        >
+          <Suspense fallback={null}>
+            <WeatherScene weatherCondition={data?.weather[0]?.main} />
+          </Suspense>
         </Canvas>
       </div>
 
-      <motion.div 
-        layout
-        className="relative z-10 w-full bg-black/20 backdrop-blur-lg rounded-3xl shadow-2xl overflow-hidden border border-white/10"
-      >
-        {/* Header / Search Section */}
-        <div className="p-6 md:p-8 flex flex-col md:flex-row justify-between items-center border-b border-white/5 gap-4">
+      {/* UI Layer */}
+      {/* FIX: Added z-10 and relative to ensure it sits ON TOP of the canvas */}
+      <div className="relative z-10 min-h-screen flex items-center justify-center p-4 pointer-events-none">
+        {/* The container needs pointer-events-auto so buttons are clickable */}
+        <div className="pointer-events-auto bg-white/90 dark:bg-slate-800/90 backdrop-blur-md p-8 rounded-3xl shadow-2xl w-full max-w-lg border border-white/20 dark:border-slate-700 transition-colors duration-300">
+          
+          <ThemeToggle />
+
           <Header />
 
-          <div className="w-full md:w-auto flex flex-col gap-3">
-            <SearchBar city={city} setCity={setCity} handleSearch={handleSearch} />
-            <RecentSearches searches={recentSearches} onSearch={handleRecentSearch} />
-          </div>
-        </div>
+          <SearchBar 
+            city={city} 
+            setCity={setCity} 
+            handleSearch={handleSearch} 
+          />
 
-        {/* Main Content Area */}
-        <div className="p-8 md:p-12 min-h-[400px] flex flex-col justify-center">
-          <AnimatePresence mode="wait">
-            {error && <ErrorMessage message={error} />}
+          <RecentSearches 
+            searches={recentSearches} 
+            onSearch={performSearch} 
+          />
 
-            {loading && <LoadingSpinner />}
+          {error && <ErrorMessage message={error} />}
 
-            {!data && !loading && !error && (
-              <motion.div 
-                initial={{ opacity: 0 }} 
-                animate={{ opacity: 1 }}
-                className="text-center text-white/40 font-light text-lg"
+          {loading && <LoadingSpinner />}
+
+          {data && !loading && (
+            <div className="text-center animate-fade-in-up space-y-6">
+              <CurrentWeather data={data} />
+              <Forecast forecast={forecast} />
+              
+              <button 
+                onClick={handleClear} 
+                className="mt-6 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white text-sm underline underline-offset-4 transition-colors"
               >
-                Enter a city to explore the forecast.
-              </motion.div>
-            )}
-
-            {data && !loading && (
-              <motion.div
-                key="weather-data"
-                initial={{ opacity: 0, scale: 0.98 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.4, ease: "easeOut" }}
-                className="w-full"
-              >
-                <CurrentWeather data={data} />
-                <Forecast forecast={forecast} />
-                  
-                <div className="mt-8 flex justify-center md:justify-end">
-                  <button 
-                    onClick={handleClear} 
-                    className="text-xs text-white/40 hover:text-white transition-colors uppercase tracking-widest"
-                  >
-                    Reset View
-                  </button>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+                Clear Search
+              </button>
+            </div>
+          )}
         </div>
-      </motion.div>
+      </div>
     </div>
   );
 }

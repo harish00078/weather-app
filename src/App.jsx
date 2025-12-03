@@ -16,10 +16,10 @@ const getLightingProps = () => {
   const isNight = hour < 6 || hour > 18;
 
   return {
-    ambientIntensity: isNight ? 0.2 : 0.6,
-    directionalIntensity: isNight ? 0.5 : 1.2,
+    ambientIntensity: isNight ? 0.3 : 0.8,
+    directionalIntensity: isNight ? 0.8 : 1.5,
     directionalPosition: isNight ? [5, 5, -5] : [0, 10, 5], 
-    fogColor: isNight ? '#0f172a' : '#f0f9ff', 
+    fogColor: isNight ? '#020617' : '#2563eb', 
     fogDensity: isNight ? 0.02 : 0.005
   };
 };
@@ -72,7 +72,7 @@ const SearchBar = ({ city, setCity, handleSearch, loading }) => (
 );
 
 const CurrentWeatherCard = ({ data }) => (
-  <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-blue-500/90 to-indigo-600/90 text-white p-8 shadow-2xl mb-8 transform transition-all hover:scale-[1.01] backdrop-blur-md border border-white/20">
+  <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-blue-500/80 to-indigo-600/80 text-white p-8 shadow-2xl mb-8 transform transition-all hover:scale-[1.01] backdrop-blur-md border border-white/20">
     <div className="absolute top-0 right-0 -mt-4 -mr-4 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
     <div className="absolute bottom-0 left-0 -mb-4 -ml-4 w-32 h-32 bg-black/10 rounded-full blur-2xl"></div>
     
@@ -206,11 +206,11 @@ function App() {
     <div className="relative min-h-screen w-full font-sans overflow-hidden text-slate-900 dark:text-white transition-colors duration-500 bg-slate-50 dark:bg-slate-950">
       
       <div className="fixed inset-0 z-0 h-screen w-screen">
-        <div className="absolute inset-0 bg-gradient-to-b from-blue-50/50 to-slate-100/50 dark:from-slate-900/50 dark:to-slate-950/80 pointer-events-none z-0"></div>
+        <div className="absolute inset-0 bg-gradient-to-b from-blue-500 to-blue-700 dark:from-slate-950 dark:to-black pointer-events-none z-[-10]"></div>
         
         <Canvas 
           camera={{ position: [0, 0, 6], fov: 45 }}
-          style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: -1 }}
+          style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 0 }}
         >
           <fog attach="fog" args={[lighting.fogColor, 5, 25]} />
           <ambientLight intensity={lighting.ambientIntensity} />
@@ -225,10 +225,10 @@ function App() {
       <div className="relative z-10 min-h-screen flex flex-col items-center justify-center p-4 md:p-8 pointer-events-none">
         <ThemeToggle />
         
-        <div className="pointer-events-auto w-full max-w-[28rem]">
+        <div className="pointer-events-auto w-full max-w-5xl">
           
-          <div className="bg-white/30 dark:bg-slate-900/40 backdrop-blur-xl p-1.5 rounded-[2.5rem] border border-white/40 dark:border-white/10 shadow-2xl ring-1 ring-black/5 transition-all duration-500">
-            <div className="bg-white/50 dark:bg-slate-900/60 rounded-[2.2rem] p-6 md:p-8 h-full backdrop-blur-sm">
+          <div className="bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl p-1.5 rounded-[2.5rem] border border-white/20 dark:border-white/10 shadow-2xl ring-1 ring-black/5 transition-all duration-500">
+            <div className="bg-white/60 dark:bg-slate-900/60 rounded-[2.2rem] p-6 md:p-8 h-full backdrop-blur-md">
               
               <div className="text-center mb-8 mt-2">
                 <h1 className="text-2xl font-black text-slate-800 dark:text-white tracking-tight font-sans">
@@ -266,20 +266,34 @@ function App() {
 
               {data && !loading && (
                 <div className="animate-in fade-in slide-in-from-bottom-8 duration-700">
-                  <CurrentWeatherCard data={data} />
-                  
-                  {forecast.length > 0 && (
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between px-1">
-                        <h3 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">5-Day Forecast</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+                    <CurrentWeatherCard data={data} />
+                    
+                    {forecast.length > 0 && (
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between px-1">
+                          <h3 className="text-sm font-bold text-slate-700 dark:text-slate-200 uppercase tracking-widest bg-white/40 dark:bg-black/20 px-3 py-1 rounded-full backdrop-blur-sm inline-block shadow-sm">5-Day Forecast</h3>
+                        </div>
+                        <div className="grid grid-cols-1 gap-3">
+                          {forecast.map((day, idx) => (
+                             <div key={idx} className="flex items-center justify-between p-3 px-4 bg-white/40 dark:bg-slate-800/40 backdrop-blur-md rounded-2xl border border-white/30 dark:border-white/10 hover:bg-white/50 dark:hover:bg-slate-700/50 transition-all shadow-sm group">
+                                <div className="flex items-center gap-4">
+                                  <span className="text-sm font-bold w-12 text-slate-700 dark:text-slate-200">{new Date(day.dt_txt).toLocaleDateString('en-US', { weekday: 'short' })}</span>
+                                  <div className="relative w-8 h-8 flex items-center justify-center">
+                                    <div className="absolute inset-0 bg-blue-400/30 blur-md rounded-full scale-0 group-hover:scale-100 transition-transform duration-300"></div>
+                                    <img src={`https://openweathermap.org/img/wn/${day.weather[0].icon}.png`} className="w-8 h-8 relative z-10" alt="icon" />
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-4">
+                                  <span className="text-xl font-bold text-slate-800 dark:text-white">{Math.round(day.main.temp)}°</span>
+                                  <span className="text-xs text-slate-600 dark:text-slate-400 capitalize w-20 text-right font-medium">{day.weather[0].main}</span>
+                                </div>
+                             </div>
+                          ))}
+                        </div>
                       </div>
-                      <div className="grid grid-cols-5 gap-2">
-                        {forecast.map((day, idx) => (
-                          <ForecastCard key={idx} day={day} />
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
 
                   <button 
                     onClick={handleClear} 

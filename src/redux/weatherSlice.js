@@ -2,7 +2,7 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 
 // Define constants at the top level so they are available to all thunks
-const API_KEY = import.meta.env.VITE_OPENWEATHER_API_KEY || "788da8a373d98c6c48f28f2a8ce5ed18";
+const API_KEY = import.meta.env.VITE_OPENWEATHER_API_KEY;
 const BASE_URL = "https://api.openweathermap.org/data/2.5";
 
 // Existing current weather thunk

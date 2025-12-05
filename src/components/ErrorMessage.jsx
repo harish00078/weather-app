@@ -1,16 +1,12 @@
 import React from 'react';
-import { motion } from 'framer-motion';
+import { X } from 'lucide-react';
 
 const ErrorMessage = ({ message }) => {
+  if (!message) return null;
   return (
-    <motion.div 
-      initial={{ opacity: 0, y: 10 }} 
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0 }}
-      className="text-center text-red-200 bg-red-500/10 p-4 rounded-xl border border-red-500/20"
-    >
-      {message}
-    </motion.div>
+    <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-300 p-4 rounded-2xl mb-6 text-center text-sm font-medium flex items-center justify-center gap-2 animate-in fade-in slide-in-from-top-4 shadow-sm">
+      <X className="w-4 h-4" /> {message}
+    </div>
   );
 };
 

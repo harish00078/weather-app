@@ -1,23 +1,27 @@
 import React from 'react';
+import { Search, Loader2 } from 'lucide-react';
 
-const SearchBar = ({ city, setCity, handleSearch }) => {
-  return (
-    <form onSubmit={handleSearch} className="relative group w-full md:w-80">
+const SearchBar = ({ city, setCity, handleSearch, loading }) => (
+  <form onSubmit={handleSearch} className="relative mb-8 group">
+    <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-purple-500 rounded-2xl blur opacity-20 group-hover:opacity-40 transition duration-500"></div>
+    <div className="relative flex items-center">
+      <Search className="absolute left-4 text-slate-400 w-5 h-5" />
       <input
         type="text"
         placeholder="Search city..."
         value={city}
         onChange={(e) => setCity(e.target.value)}
-        className="w-full bg-white/10 border border-white/10 rounded-full py-2 px-5 pr-12 text-sm focus:outline-none focus:bg-white/20 transition-all placeholder-white/50"
+        className="w-full pl-12 pr-4 py-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-white/20 dark:border-slate-700 rounded-2xl text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all shadow-sm font-medium"
       />
       <button 
         type="submit" 
-        className="absolute right-1 top-1 bottom-1 bg-white/10 hover:bg-white/20 rounded-full px-3 text-xs font-medium transition-colors"
+        disabled={loading || !city.trim()}
+        className="absolute right-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-blue-500/25"
       >
-        Go
+        {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Go"}
       </button>
-    </form>
-  );
-};
+    </div>
+  </form>
+);
 
 export default SearchBar;

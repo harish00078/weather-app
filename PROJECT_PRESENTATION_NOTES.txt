@@ -1,0 +1,98 @@
+# WeatherSense Application - Project Documentation
+Generated for Project Presentation
+
+## 1. Project Overview
+*   **Project Name:** WeatherSense
+*   **Type:** Single Page Application (SPA)
+*   **Description:** A modern, visually immersive weather dashboard that combines real-time meteorological data with dynamic 3D graphics. Unlike standard weather apps, WeatherSense uses a 3D background that visually replicates the current weather conditions (e.g., raining, sunny, cloudy) to provide an engaging user experience.
+
+## 2. Technology Stack
+The application leverages a modern React ecosystem stack for performance and developer experience:
+
+*   **Core Framework:** React 18
+*   **Build Tool:** Vite (chosen for speed and optimized HMR)
+*   **Language:** JavaScript (ES6+)
+*   **Styling:** Tailwind CSS (Utility-first framework for responsive design and dark mode)
+*   **State Management:** Redux Toolkit (Manages global application state and API data flow)
+*   **3D Graphics:** React Three Fiber & Drei (Declarative Three.js for React)
+*   **Backend/Persistence:** Google Firebase Firestore (Real-time NoSQL database)
+*   **External API:** OpenWeatherMap API (Data source for current weather and forecasts)
+*   **HTTP Client:** Axios
+
+## 2.1 Project Folder Structure
+A high-level overview of the source code organization:
+
+```text
+/
+├── .env                  # Environment variables (API Keys)
+├── package.json          # Project dependencies & scripts
+├── tailwind.config.js    # Styling configuration
+├── vite.config.js        # Build tool configuration
+└── src/
+    ├── main.jsx          # Application Entry Point (Redux Provider)
+    ├── App.jsx           # Main Layout & Container Component
+    ├── firebase.js       # Firebase SDK Initialization
+    ├── assets/           # Static images & icons
+    ├── components/       # Reusable UI Modules
+    │   ├── CurrentWeather.jsx
+    │   ├── Forecast.jsx
+    │   ├── SearchBar.jsx
+    │   ├── WeatherScene.jsx  # 3D Canvas Logic
+    │   └── ...
+    └── redux/            # Global State Management
+        ├── store.js      # Redux Store Configuration
+        └── weatherSlice.js # Weather Data Reducers & Async Actions
+```
+
+## 3. Key Features
+1.  **Real-Time Weather Search:** 
+    *   Users can search for any city globally.
+    *   Displays current temperature, weather description, humidity, and wind speed.
+2.  **5-Day Forecast:** 
+    *   Provides a summarized daily forecast for the next 5 days.
+3.  **Dynamic 3D Environment:** 
+    *   The background is a 3D canvas that changes based on the API response.
+    *   *Example:* If the API reports "Rain", the 3D scene renders falling rain particles.
+    *   Includes dynamic lighting based on the time of day (Day/Night cycle).
+4.  **Persistent History:** 
+    *   The last 4 searches are saved to a cloud database (Firebase).
+    *   Users can quickly click a recent tag to re-search that city.
+5.  **Dark/Light Mode:** 
+    *   Fully thematic support with a toggle switch.
+    *   Glassmorphism UI elements (frosted glass effect) adapt to the theme.
+
+## 4. Architectural Design
+
+### Component Structure (`src/components/`)
+Refactored for modularity and reusability:
+*   `App.jsx`: The main layout controller that ties Redux, UI, and the 3D Canvas together.
+*   `SearchBar.jsx`: Handles user input and form submission.
+*   `CurrentWeather.jsx`: Displays the primary weather card with large visuals.
+*   `Forecast.jsx`: Renders the list of future weather predictions.
+*   `WeatherScene.jsx`: The 3D logic entry point that decides which environment to render.
+*   `RecentSearches.jsx`: Listens to Firebase updates and renders history chips.
+
+### State Management (Redux)
+Located in `src/redux/weatherSlice.js`. It handles the "Async Thunk" pattern:
+1.  **Pending:** UI shows a loading spinner.
+2.  **Fulfilled:** Data is stored, and the UI updates with weather info.
+3.  **Rejected:** Error messages are stored and displayed (e.g., "City not found").
+
+### Data Flow
+1.  **Input:** User enters "London".
+2.  **Dispatch:** Redux action `fetchWeather("London")` is triggered.
+3.  **API:** Application requests data from OpenWeatherMap.
+4.  **Store:** Response updates the global Redux store.
+5.  **Render:** 
+    *   `CurrentWeather` component updates text.
+    *   `WeatherScene` component changes the 3D background to match "London's" weather.
+6.  **Side Effect:** The search term is pushed to the Firebase `history` collection.
+
+## 5. Security & Configuration
+*   **Environment Variables:** Sensitive API keys (Firebase Config, OpenWeatherMap Key) are stored in a `.env` file (e.g., `VITE_OPENWEATHER_API_KEY`).
+*   **Git Safety:** The `.env` file is included in `.gitignore` to prevent leaking credentials to version control.
+
+## 6. Future Enhancements (Roadmap)
+*   **Geolocation:** Automatically detect user's location on load.
+*   **Detailed Charts:** Use a charting library to show temperature trends over 24 hours.
+*   **User Authentication:** Allow users to log in and save "Favorite" cities permanently.
